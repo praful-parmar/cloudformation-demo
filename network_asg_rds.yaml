@@ -139,10 +139,7 @@ Resources:
             LaunchTemplateData: 
                 ImageId: ami-04902260ca3d33422
                 InstanceType: t2.micro
-                # KeyName: MyKeyPair
-                # SecurityGroupIds: 
-                # - sg-7c2270198example
-                # - sg-903004f88example
+
 
 #database
   MyDB:
@@ -156,8 +153,3 @@ Resources:
       EngineVersion: 8.0.16
       MasterUsername: admin
       MasterUserPassword: password
-      # VpcId: !Ref VPC
-    #   MonitoringInterval: '60'
-    #   MonitoringRoleArn: 'arn:aws:iam::123456789012:role/rds-monitoring-role'
-    #   AvailabilityZones: 
-    #      - String
