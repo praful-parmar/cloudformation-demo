@@ -1,0 +1,226 @@
+Resources:
+  VPC:
+      Type: "AWS::EC2::VPC"
+      Properties:
+        EnableDnsSupport: "true"
+        EnableDnsHostnames: "true"
+        CidrBlock: "10.0.0.0/22"
+
+#subnet
+  PublicSubnet0:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: "us-east-1a"
+        CidrBlock: "10.0.0.0/25"
+        MapPublicIpOnLaunch: "true"
+  PublicSubnet1:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: "us-east-1b"
+        CidrBlock: "10.0.1.0/25"
+        MapPublicIpOnLaunch: "true"
+  PrivateSubnet0:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: "us-east-1a"
+        CidrBlock: "10.0.0.128/25"
+        MapPublicIpOnLaunch: "true"
+  PrivateSubnet1:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: "us-east-1b"
+        CidrBlock: "10.0.1.128/25"
+        MapPublicIpOnLaunch: "true"
+
+#route table
+  publicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+    DependsOn: VPC
+  privateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+    DependsOn: VPC
+
+#route table and subnet association
+  publicSubnet0RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet0
+      RouteTableId: !Ref publicRouteTable
+  publicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref publicRouteTable
+
+  privateSubnet0RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet0
+      RouteTableId: !Ref privateRouteTable
+  privateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref privateRouteTable
+
+
+
+#InternetgateWay
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  
+  myInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref myInternetGateway
+      VpcId: !Ref VPC
+    DependsOn: myInternetGateway
+
+#nat gateway
+  NAT:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+         Fn::GetAtt:
+         - EIP
+         - AllocationId
+      SubnetId: !Ref PublicSubnet0
+    
+  EIP:
+    DependsOn: myInternetGatewayAttachment
+    Type: AWS::EC2::EIP
+    Properties:
+        Domain: vpc
+
+#setting routes
+  RoutePrivate:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !Ref privateRouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NAT
+  RoutePublic:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !Ref publicRouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref myInternetGateway
+    DependsOn: myInternetGatewayAttachment
+  InstanceSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow All
+            VpcId: !Ref VPC
+            SecurityGroupIngress:
+            -   IpProtocol: -1
+                FromPort: -1
+                ToPort: -1
+                CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            -   IpProtocol: -1
+                FromPort: -1
+                ToPort: -1
+                CidrIp: 0.0.0.0/0
+  
+#auto scalling
+  ASG:
+      Type: AWS::AutoScaling::AutoScalingGroup
+      Properties: 
+            AutoScalingGroupName: "asg"
+            DesiredCapacity: 2
+            MaxSize: "5"
+            MinSize: "1"
+            HealthCheckGracePeriod: 300
+            LaunchTemplate: 
+                LaunchTemplateId: !Ref myLaunchTemplate
+                Version: !GetAtt myLaunchTemplate.LatestVersionNumber
+            TargetGroupARNs:
+              - !Ref TG
+            VPCZoneIdentifier: 
+                - !Ref PrivateSubnet0
+                - !Ref PrivateSubnet1
+      DependsOn: lb
+  myLaunchTemplate:
+      Type: AWS::EC2::LaunchTemplate
+      Properties: 
+            LaunchTemplateName: !Sub launch-template
+            LaunchTemplateData: 
+                ImageId: ami-04902260ca3d33422
+                InstanceType: t2.micro
+                UserData:
+                    Fn::Base64: 
+                        !Sub |
+                            #!/bin/bash
+                            yum update -y
+                            yum install httpd -y
+                            systemctl start httpd
+                            systemctl enable httpd
+                            echo "<h1>$(hostname -f)" > /var/www/html/index.html
+                # KeyName: MyKeyPair
+                SecurityGroupIds: 
+                - !Ref InstanceSecurityGroup
+
+#database
+  # MyDB:
+  #   Type: 'AWS::RDS::DBInstance'
+  #   Properties:
+  #     DBInstanceIdentifier: dbb
+  #     DBName: dbb
+  #     DBInstanceClass: db.t2.micro
+  #     AllocatedStorage: "20"
+  #     Engine: MySQL
+  #     EngineVersion: 8.0.16
+  #     MasterUsername: admin
+  #     MasterUserPassword: password
+  #     VpcId: VPC
+  #     AvailabilityZones: 
+  #         - !Ref PrivateSubnet0
+  #         - !Ref PrivateSubnet0
+  lb:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties: 
+            Name: "lb"
+            Scheme: internet-facing
+            # SecurityGroups: 
+            #     - !Ref InstanceSecurityGroup
+            # SubnetMappings: 
+            #Listeners: !Ref HTTPlistener
+            Subnets: 
+                - !Ref PublicSubnet0
+                - !Ref PublicSubnet1
+            Tags: 
+                  - Key: "lb"
+                    Value: "my-lb"
+            Type: application
+  TG:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPort: 80
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      Name: TG
+      Port: 80
+      Protocol: HTTP
+      TargetType: instance
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref VPC
+  HTTPlistener:
+   Type: "AWS::ElasticLoadBalancingV2::Listener"
+   Properties:
+     DefaultActions:
+       - Type: forward
+         TargetGroupArn: !Ref TG
+     LoadBalancerArn: !Ref lb
+     Port: 80
+     Protocol: "HTTP"
