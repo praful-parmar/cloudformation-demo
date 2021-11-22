@@ -190,8 +190,8 @@ Resources:
         Properties: 
             Name: "lb"
             Scheme: internet-facing
-            # SecurityGroups: 
-            #     - !Ref InstanceSecurityGroup
+            SecurityGroups: 
+                - !Ref InstanceSecurityGroup
             # SubnetMappings: 
             #Listeners: !Ref HTTPlistener
             Subnets: 
@@ -201,6 +201,7 @@ Resources:
                   - Key: "lb"
                     Value: "my-lb"
             Type: application
+        DependsOn: myInternetGatewayAttachment
   TG:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
