@@ -2,11 +2,40 @@ Parameters:
   InstanceTypeParameter:
     Type: String
     Default: t2.micro
-    AllowedValues:
-      - t2.micro
-      - m1.small
-      - m1.large
+    AllowedValues: 
+      [t2.nano, t2.micro, t2.small, t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge, m5.large, 
+      m5.xlarge, m5.2xlarge, m5.4xlarge,c5.large, c5.xlarge, c5.2xlarge, 
+      c5.4xlarge, c5.9xlarge, g3.8xlarge,r5.large, r5.xlarge, r5.2xlarge, 
+      r5.4xlarge, r3.12xlarge,i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
     Description: Enter t2.micro, m1.small, or m1.large. Default is t2.micro.
+  AvailabilityZone1Parameter:
+    Type: String
+    Default: us-east-1a
+    AllowedValues:
+      - us-east-1a
+      - us-east-1b
+      - us-east-1c
+      - us-east-1d
+      - us-east-1e
+      - us-east-1f
+  AvailabilityZone2Parameter:
+    Type: String
+    Default: us-east-1a
+    AllowedValues:
+      - us-east-1a
+      - us-east-1b
+      - us-east-1c
+      - us-east-1d
+      - us-east-1e
+      - us-east-1f
+  DBInstanceClassParameter:
+    Type: String
+    Default: db.t2.micro
+    AllowedValues:
+      - db.t2.micro
 
 Resources:
   VPC:
@@ -21,28 +50,28 @@ Resources:
       Type: "AWS::EC2::Subnet"
       Properties:
         VpcId: !Ref VPC
-        AvailabilityZone: "us-east-1a"
+        AvailabilityZone: !Ref AvailabilityZone1Parameter
         CidrBlock: "10.0.0.0/25"
         MapPublicIpOnLaunch: "true"
   PublicSubnet1:
       Type: "AWS::EC2::Subnet"
       Properties:
         VpcId: !Ref VPC
-        AvailabilityZone: "us-east-1b"
+        AvailabilityZone: !Ref AvailabilityZone2Parameter
         CidrBlock: "10.0.1.0/25"
         MapPublicIpOnLaunch: "true"
   PrivateSubnet0:
       Type: "AWS::EC2::Subnet"
       Properties:
         VpcId: !Ref VPC
-        AvailabilityZone: "us-east-1a"
+        AvailabilityZone: !Ref AvailabilityZone1Parameter
         CidrBlock: "10.0.0.128/25"
         MapPublicIpOnLaunch: "true"
   PrivateSubnet1:
       Type: "AWS::EC2::Subnet"
       Properties:
         VpcId: !Ref VPC
-        AvailabilityZone: "us-east-1b"
+        AvailabilityZone: !Ref AvailabilityZone2Parameter
         CidrBlock: "10.0.1.128/25"
         MapPublicIpOnLaunch: "true"
 
@@ -180,22 +209,6 @@ Resources:
                 - !Ref InstanceSecurityGroup
 
 
-#database
-  # MyDB:
-  #   Type: 'AWS::RDS::DBInstance'
-  #   Properties:
-  #     DBInstanceIdentifier: dbb
-  #     DBName: dbb
-  #     DBInstanceClass: db.t2.micro
-  #     AllocatedStorage: "20"
-  #     Engine: MySQL
-  #     EngineVersion: 8.0.16
-  #     MasterUsername: admin
-  #     MasterUserPassword: password
-  #     VpcId: VPC
-  #     AvailabilityZones: 
-  #         - !Ref PrivateSubnet0
-  #         - !Ref PrivateSubnet0
   lb:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
         Properties: 
@@ -236,3 +249,40 @@ Resources:
      LoadBalancerArn: !Ref lb
      Port: 80
      Protocol: "HTTP"
+  
+  MyRDSSecret:
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      Description: "This is a Secrets Manager secret for an RDS DB instance"
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "admin"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+  MyRDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20
+      DBInstanceClass: !Ref DBInstanceClassParameter
+      Engine: mysql
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref MyRDSSecret, ':SecretString:username}}' ]]
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref MyRDSSecret, ':SecretString:password}}' ]]
+      BackupRetentionPeriod: 0
+      DBInstanceIdentifier: 'DB'
+      DBSubnetGroupName: !Ref myDBSubnetGroup
+
+  SecretRDSInstanceAttachment:
+    Type: "AWS::SecretsManager::SecretTargetAttachment"
+    Properties:
+      SecretId: !Ref MyRDSSecret
+      TargetId: !Ref MyRDSInstance
+      TargetType: AWS::RDS::DBInstance
+  myDBSubnetGroup: 
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties: 
+      DBSubnetGroupDescription: description
+      SubnetIds: 
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+    
