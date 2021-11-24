@@ -190,6 +190,7 @@ Resources:
       DependsOn: lb
   myLaunchTemplate:
       Type: AWS::EC2::LaunchTemplate
+      DependsOn: MyRDSInstance
       Properties: 
             LaunchTemplateName: !Sub launch-template
             LaunchTemplateData: 
@@ -201,6 +202,7 @@ Resources:
                             #!/bin/bash
                             yum update -y
                             yum install pip -y
+                            pip install awscli
                             yum install git -y
                             yum install curl -y
                             pip install boto3
@@ -217,6 +219,7 @@ Resources:
                 # KeyName: MyKeyPair
                 SecurityGroupIds: 
                 - !Ref InstanceSecurityGroup
+            
 
 
   lb:
@@ -263,6 +266,7 @@ Resources:
   MyRDSSecret:
     Type: "AWS::SecretsManager::Secret"
     Properties:
+      Name: "MyRDSSecret"
       Description: "This is a Secrets Manager secret for an RDS DB instance"
       GenerateSecretString:
         SecretStringTemplate: '{"username": "admin"}'
