@@ -15,7 +15,7 @@ from botocore.exceptions import ClientError
 
 def get_secret():
 
-    secret_name = "arn:aws:secretsmanager:us-east-1:995157325848:secret:MyRDSSecret-*"
+    secret_name = "arn:aws:secretsmanager:us-east-1:294901307230:secret:MyRDSSecret-*"
     region_name = "us-east-1"
 
     session = boto3.session.Session()
