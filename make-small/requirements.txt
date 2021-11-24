@@ -2,3 +2,5 @@ flask
 flask_mysqldb
 wtforms
 passlib
+awscli
+boto3

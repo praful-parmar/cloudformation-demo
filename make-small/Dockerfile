@@ -8,13 +8,8 @@ RUN apk update \
 
 RUN pip3 install -r requirements.txt --no-cache-dir
 
-
-
-# ENV MYSQL_HOST db.caj1ut75zkr0.us-east-2.rds.amazonaws.com
-# ENV MYSQL_USER admin
-# ENV MYSQL_PASSWORD password
-# ENV MYSQL_DB db
-# ENV MYSQL_CURSORCLASS DictCursor
+RUN aws configure set aws_access_key_id AKIAXJRN3TDCRFQGCUUO
+RUN aws configure set aws_secret_access_key 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
 
 COPY . /app 
 ENTRYPOINT ["python3"] 
