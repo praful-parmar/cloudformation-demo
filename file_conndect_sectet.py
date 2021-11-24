@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 
 def get_secret():
 
-    secret_name = "MyRDSSecret"
+    secret_name = "arn:aws:secretsmanager:us-east-1:757029124596:secret:MyRDSSecret-*"
     region_name = "us-east-1"
 
     # Create a Secrets Manager client

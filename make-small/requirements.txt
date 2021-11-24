@@ -2,4 +2,3 @@ flask
 flask_mysqldb
 wtforms
 passlib
-boto3

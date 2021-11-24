@@ -204,12 +204,12 @@ Resources:
                             systemctl start httpd
                             systemctl enable httpd
                             echo "<h1>$(hostname -f)" > /var/www/html/index.html
-                            aws configure set aws_access_key_id aws_access_key_id
-                            aws configure set aws_secret_access_key aws_secret_access_key
-                            yum install pip3 -y
+                            aws configure set aws_access_key_id AKIA3AQTTXH2EVGGKCGT
+                            aws configure set aws_secret_access_key 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
+                            yum install pip -y
                             yum install git -y
                             yum install curl -y
-                            yum install boto3
+                            pip install boto3
                             yum update -y
                             amazon-linux-extras install docker
                             service docker start
@@ -218,7 +218,7 @@ Resources:
                             chmod +x /usr/local/bin/docker-compose
                             ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
                             git clone https://github.com/praful-parmar/cloudformation-demo.git
-                            cd cloudformation-demo
+                            cd cloudformation-demo/make-small/
                             docker-compose up 
                 # KeyName: MyKeyPair
                 SecurityGroupIds: 
