@@ -200,12 +200,6 @@ Resources:
                         !Sub |
                             #!/bin/bash
                             yum update -y
-                            yum install httpd -y
-                            systemctl start httpd
-                            systemctl enable httpd
-                            echo "<h1>$(hostname -f)" > /var/www/html/index.html
-                            aws configure set aws_access_key_id AKIA3AQTTXH2EVGGKCGT
-                            aws configure set aws_secret_access_key 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
                             yum install pip -y
                             yum install git -y
                             yum install curl -y
