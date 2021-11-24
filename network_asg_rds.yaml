@@ -240,12 +240,12 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       HealthCheckIntervalSeconds: 30
-      HealthCheckPort: 80
+      HealthCheckPort: 5000
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 3
       Name: TG
-      Port: 80
+      Port: 5000
       Protocol: HTTP
       TargetType: instance
       UnhealthyThresholdCount: 2
@@ -257,7 +257,7 @@ Resources:
        - Type: forward
          TargetGroupArn: !Ref TG
      LoadBalancerArn: !Ref lb
-     Port: 80
+     Port: 5000
      Protocol: "HTTP"
   
   MyRDSSecret:
