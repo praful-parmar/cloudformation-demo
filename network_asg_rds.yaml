@@ -185,8 +185,8 @@ Resources:
             TargetGroupARNs:
               - !Ref TG
             VPCZoneIdentifier: 
-                - !Ref PrivateSubnet0
-                - !Ref PrivateSubnet1
+                - !Ref PublicSubnet0
+                - !Ref PublicSubnet0
       DependsOn: lb
   myLaunchTemplate:
       Type: AWS::EC2::LaunchTemplate
