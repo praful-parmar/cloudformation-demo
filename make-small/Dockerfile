@@ -8,8 +8,8 @@ RUN apk update \
 
 RUN pip3 install -r requirements.txt --no-cache-dir
 
-RUN aws configure set aws_access_key_id AKIAQPLSRNHOA6VT4J55
-RUN aws configure set aws_secret_access_key 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
+RUN aws configure set aws_access_key_id AKIAZCPKNG776OCDSHRE
+RUN aws configure set aws_secret_access_key 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
 ENV ARN $(aws secretsmanager get-secret-value --secret-id MyRDSSecret --version-stage AWSPREVIOUS --region us-east-1 | grep ARN |awk -F '":' '{print $2}')
 COPY . /app 
 ENTRYPOINT ["python3"] 
