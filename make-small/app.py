@@ -23,7 +23,6 @@ def get(name, version=None):
     response = secrets_client.get_secret_value(**kwargs)
     secret=eval(response["SecretString"])
 
-    os.environ['MYSQL_PORT'] = secret["port"]
     os.environ['MYSQL_PASSWORD'] = secret["password"]
     os.environ['MYSQL_DB'] = secret["dbInstanceIdentifier"]
     os.environ['MYSQL_HOST'] = secret["host"]
