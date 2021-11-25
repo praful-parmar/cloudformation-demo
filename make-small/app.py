@@ -324,4 +324,5 @@ if __name__ =='__main__':
     app.config['MYSQL_DB'] = secret["dbInstanceIdentifier"]
     app.config['MYSQL_HOST'] = secret["host"]
     app.config['MYSQL_USER']  = secret["username"]
+    app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
     app.run(debug=False,host='0.0.0.0',port=5000)
