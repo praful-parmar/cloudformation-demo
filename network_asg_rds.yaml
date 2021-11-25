@@ -201,11 +201,8 @@ Resources:
                         !Sub |
                             #!/bin/bash
                             yum update -y
-                            yum install pip -y
-                            pip install awscli
                             yum install git -y
                             yum install curl -y
-                            pip install boto3
                             yum update -y
                             amazon-linux-extras install docker
                             service docker start
