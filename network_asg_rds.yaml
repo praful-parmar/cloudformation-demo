@@ -216,8 +216,6 @@ Resources:
                 # KeyName: MyKeyPair
                 SecurityGroupIds: 
                 - !Ref InstanceSecurityGroup
-            
-
 
   lb:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
