@@ -212,7 +212,7 @@ Resources:
                             ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
                             git clone https://github.com/praful-parmar/cloudformation-demo.git
                             cd cloudformation-demo/make-small/
-                            docker-compose up 
+                            docker-compose up
                 # KeyName: MyKeyPair
                 SecurityGroupIds: 
                 - !Ref InstanceSecurityGroup
