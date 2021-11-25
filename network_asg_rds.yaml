@@ -177,7 +177,7 @@ Resources:
             AutoScalingGroupName: "asg"
             DesiredCapacity: 2
             MaxSize: "5"
-            MinSize: "1"
+            MinSize: "2"
             HealthCheckGracePeriod: 300
             LaunchTemplate: 
                 LaunchTemplateId: !Ref myLaunchTemplate
@@ -192,7 +192,7 @@ Resources:
       Type: AWS::EC2::LaunchTemplate
       DependsOn: MyRDSInstance
       Properties: 
-            LaunchTemplateName: !Sub launch-template
+            LaunchTemplateName: !Sub launchtemplate
             LaunchTemplateData: 
                 ImageId: ami-04902260ca3d33422
                 InstanceType: !Ref InstanceTypeParameter
