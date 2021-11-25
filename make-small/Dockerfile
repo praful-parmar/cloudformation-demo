@@ -8,8 +8,8 @@ RUN apk update \
 
 RUN pip3 install -r requirements.txt --no-cache-dir
 
-RUN aws configure set aws_access_key_id AKIATYAYX2YDGPBC5PNK
-RUN aws configure set aws_secret_access_key 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
+RUN aws configure set aws_access_key_id AKIA3DIWUF6CTMVRLWXF
+RUN aws configure set aws_secret_access_key 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
 RUN aws configure set region us-east-1
 
 COPY . /app 
