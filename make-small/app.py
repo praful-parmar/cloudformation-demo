@@ -22,20 +22,16 @@ def get(name, version=None):
         kwargs['VersionStage'] = version
     response = secrets_client.get_secret_value(**kwargs)
     secret=eval(response["SecretString"])
-
-    os.environ['MYSQL_PASSWORD'] = secret["password"]
-    os.environ['MYSQL_DB'] = secret["dbInstanceIdentifier"]
-    os.environ['MYSQL_HOST'] = secret["host"]
-    os.environ['MYSQL_USER'] = secret["username"]
+    return secret
 
 
 
 
-app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
-app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB')
-app.config['MYSQL_CURSORCLASS'] = os.environ.get('MYSQL_CURSORCLASS')
+# app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
+# app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER')
+# app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
+# app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB')
+# app.config['MYSQL_CURSORCLASS'] = os.environ.get('MYSQL_CURSORCLASS')
 
 
 
@@ -323,5 +319,9 @@ def delete_article(id):
 
 if __name__ =='__main__':
     app.secret_key='secret123'
-    get("MyRDSSecret")
+    secret=get("MyRDSSecret")
+    app.config['MYSQL_PASSWORD'] = secret["password"]
+    app.config['MYSQL_DB'] = secret["dbInstanceIdentifier"]
+    app.config['MYSQL_HOST'] = secret["host"]
+    app.config['MYSQL_USER']  = secret["username"]
     app.run(debug=False,host='0.0.0.0',port=5000)
