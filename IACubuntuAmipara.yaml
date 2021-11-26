@@ -1,0 +1,310 @@
+Parameters:
+  InstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+    AllowedValues: 
+      [t2.nano, t2.micro, t2.small, t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge, m5.large, 
+      m5.xlarge, m5.2xlarge, m5.4xlarge,c5.large, c5.xlarge, c5.2xlarge, 
+      c5.4xlarge, c5.9xlarge, g3.8xlarge,r5.large, r5.xlarge, r5.2xlarge, 
+      r5.4xlarge, r3.12xlarge,i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+    Description: Enter t2.micro, m1.small, or m1.large. Default is t2.micro.
+  AmiParameter:
+    Type: String
+    Default: ami-083654bd07b5da81d
+    AllowedValues:
+      - ami-0279c3b3186e54acd
+      - ami-0b0ea68c435eb488d
+      - ami-083654bd07b5da81d
+  AvailabilityZone1Parameter:
+    Type: String
+    Default: us-east-1a
+    AllowedValues:
+      - us-east-1a
+      - us-east-1b
+      - us-east-1c
+      - us-east-1d
+      - us-east-1e
+      - us-east-1f
+  AvailabilityZone2Parameter:
+    Type: String
+    Default: us-east-1a
+    AllowedValues:
+      - us-east-1a
+      - us-east-1b
+      - us-east-1c
+      - us-east-1d
+      - us-east-1e
+      - us-east-1f
+  DBInstanceClassParameter:
+    Type: String
+    Default: db.t2.micro
+    AllowedValues:
+      - db.t2.micro
+
+Resources:
+  VPC:
+      Type: "AWS::EC2::VPC"
+      Properties:
+        EnableDnsSupport: "true"
+        EnableDnsHostnames: "true"
+        CidrBlock: "10.0.0.0/22"
+
+#subnet
+  PublicSubnet0:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Ref AvailabilityZone1Parameter
+        CidrBlock: "10.0.0.0/25"
+        MapPublicIpOnLaunch: "true"
+  PublicSubnet1:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Ref AvailabilityZone2Parameter
+        CidrBlock: "10.0.1.0/25"
+        MapPublicIpOnLaunch: "true"
+  PrivateSubnet0:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Ref AvailabilityZone1Parameter
+        CidrBlock: "10.0.0.128/25"
+        MapPublicIpOnLaunch: "true"
+  PrivateSubnet1:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Ref AvailabilityZone2Parameter
+        CidrBlock: "10.0.1.128/25"
+        MapPublicIpOnLaunch: "true"
+
+#route table
+  publicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+    DependsOn: VPC
+  privateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+    DependsOn: VPC
+
+#route table and subnet association
+  publicSubnet0RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet0
+      RouteTableId: !Ref publicRouteTable
+  publicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref publicRouteTable
+
+  privateSubnet0RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet0
+      RouteTableId: !Ref privateRouteTable
+  privateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref privateRouteTable
+
+
+
+#InternetgateWay
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  
+  myInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref myInternetGateway
+      VpcId: !Ref VPC
+    DependsOn: myInternetGateway
+
+#nat gateway
+  NAT:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+         Fn::GetAtt:
+         - EIP
+         - AllocationId
+      SubnetId: !Ref PublicSubnet0
+    
+  EIP:
+    DependsOn: myInternetGatewayAttachment
+    Type: AWS::EC2::EIP
+    Properties:
+        Domain: vpc
+
+#setting routes
+  RoutePrivate:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !Ref privateRouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NAT
+  RoutePublic:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !Ref publicRouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref myInternetGateway
+    DependsOn: myInternetGatewayAttachment
+  InstanceSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow All
+            VpcId: !Ref VPC
+            SecurityGroupIngress:
+            -   IpProtocol: -1
+                FromPort: -1
+                ToPort: -1
+                CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            -   IpProtocol: -1
+                FromPort: -1
+                ToPort: -1
+                CidrIp: 0.0.0.0/0
+  
+#auto scalling
+  ASG:
+      Type: AWS::AutoScaling::AutoScalingGroup
+      Properties: 
+            AutoScalingGroupName: "asg"
+            DesiredCapacity: 2
+            MaxSize: "5"
+            MinSize: "2"
+            HealthCheckGracePeriod: 300
+            LaunchTemplate: 
+                LaunchTemplateId: !Ref myLaunchTemplate
+                Version: !GetAtt myLaunchTemplate.LatestVersionNumber
+            TargetGroupARNs:
+              - !Ref TG
+            VPCZoneIdentifier: 
+                - !Ref PublicSubnet0
+                - !Ref PublicSubnet0
+      DependsOn: lb
+  myLaunchTemplate:
+      Type: AWS::EC2::LaunchTemplate
+      DependsOn: MyRDSInstance
+      Properties: 
+            LaunchTemplateName: !Sub launchtemplate
+            LaunchTemplateData: 
+                ImageId: !Ref AmiParameter
+                InstanceType: !Ref InstanceTypeParameter
+                UserData:
+                    Fn::Base64: 
+                        !Sub |
+                          #!/bin/bash
+                          apt update -y &&\
+                          apt install mysql-server -y &&\
+                          apt install libmysqlclient-dev -y &&\
+                          apt install git -y &&\
+                          apt install curl -y &&\
+                          apt update -y  &&\
+                          apt install python3-pip -y &&\
+                          pip3 install flask &&\
+                          pip3 install flask-mysqldb &&\
+                          pip3 install wtforms &&\
+                          pip3 install passlib &&\
+                          pip3 install boto3 &&\
+                          pip3 install awscli &&\
+                          aws configure set aws_access_key_id AKIAU4UUZGIPWPEL42ZV &&\
+                          aws configure set aws_secret_access_key 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 &&\
+                          aws configure set region us-east-1 &&\
+                          git clone https://github.com/praful-parmar/cloudformation-demo.git &&\
+                          cd cloudformation-demo/make-small/ &&\
+                          python3 app.py
+                # KeyName: MyKeyPair
+                SecurityGroupIds: 
+                - !Ref InstanceSecurityGroup
+
+  lb:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties: 
+            Name: "lb"
+            Scheme: internet-facing
+            SecurityGroups: 
+                - !Ref InstanceSecurityGroup
+            # SubnetMappings: 
+            #Listeners: !Ref HTTPlistener
+            Subnets: 
+                - !Ref PublicSubnet0
+                - !Ref PublicSubnet1
+            Tags: 
+                  - Key: "lb"
+                    Value: "my-lb"
+            Type: application
+        DependsOn: myInternetGatewayAttachment
+  TG:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPort: 5000
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 3
+      Name: TG
+      Port: 5000
+      Protocol: HTTP
+      TargetType: instance
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref VPC
+  HTTPlistener:
+   Type: "AWS::ElasticLoadBalancingV2::Listener"
+   Properties:
+     DefaultActions:
+       - Type: forward
+         TargetGroupArn: !Ref TG
+     LoadBalancerArn: !Ref lb
+     Port: 5000
+     Protocol: "HTTP"
+  
+  MyRDSSecret:
+    Type: "AWS::SecretsManager::Secret"
+    Properties:
+      Name: "MyRDSSecret"
+      Description: "This is a Secrets Manager secret for an RDS DB instance"
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "admin"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+  MyRDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 20
+      DBInstanceClass: !Ref DBInstanceClassParameter
+      Engine: mysql
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref MyRDSSecret, ':SecretString:username}}' ]]
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref MyRDSSecret, ':SecretString:password}}' ]]
+      BackupRetentionPeriod: 0
+      DBInstanceIdentifier: 'DB'
+      DBSubnetGroupName: !Ref myDBSubnetGroup
+
+  SecretRDSInstanceAttachment:
+    Type: "AWS::SecretsManager::SecretTargetAttachment"
+    Properties:
+      SecretId: !Ref MyRDSSecret
+      TargetId: !Ref MyRDSInstance
+      TargetType: AWS::RDS::DBInstance
+  myDBSubnetGroup: 
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties: 
+      DBSubnetGroupDescription: description
+      SubnetIds: 
+        - !Ref PrivateSubnet0
+        - !Ref PrivateSubnet1
+    
