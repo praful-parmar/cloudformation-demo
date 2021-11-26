@@ -16,7 +16,6 @@ Parameters:
     Default: ami-083654bd07b5da81d
     AllowedValues:
       - ami-0279c3b3186e54acd
-      - ami-0b0ea68c435eb488d
       - ami-083654bd07b5da81d
   AvailabilityZone1Parameter:
     Type: String
