@@ -219,8 +219,8 @@ Resources:
                           pip3 install passlib &&\
                           pip3 install boto3 &&\
                           pip3 install awscli &&\
-                          aws configure set aws_access_key_id AKIASHTTTSUCLI3PHT4L &&\
-                          aws configure set aws_secret_access_key 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 &&\
+                          aws configure set aws_access_key_id AKIA2ZFMGV7VWNBWXWKR &&\
+                          aws configure set aws_secret_access_key 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 &&\
                           aws configure set region us-east-1 &&\
                           git clone https://github.com/praful-parmar/cloudformation-demo.git &&\
                           cd cloudformation-demo/make-small/ &&\
@@ -306,4 +306,3 @@ Resources:
       SubnetIds: 
         - !Ref PrivateSubnet0
         - !Ref PrivateSubnet1
-    
