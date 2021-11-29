@@ -72,14 +72,12 @@ Resources:
         VpcId: !Ref VPC
         AvailabilityZone: !Ref AvailabilityZone1Parameter
         CidrBlock: "10.0.0.128/25"
-        MapPublicIpOnLaunch: "true"
   PrivateSubnet1:
       Type: "AWS::EC2::Subnet"
       Properties:
         VpcId: !Ref VPC
         AvailabilityZone: !Ref AvailabilityZone2Parameter
         CidrBlock: "10.0.1.128/25"
-        MapPublicIpOnLaunch: "true"
 
 #route table
   publicRouteTable:
@@ -191,8 +189,8 @@ Resources:
             TargetGroupARNs:
               - !Ref TG
             VPCZoneIdentifier: 
-                - !Ref PublicSubnet0
-                - !Ref PublicSubnet0
+                - !Ref PrivateSubnet0
+                - !Ref PrivateSubnet1
       DependsOn: lb
   myLaunchTemplate:
       Type: AWS::EC2::LaunchTemplate
@@ -219,8 +217,8 @@ Resources:
                           pip3 install passlib &&\
                           pip3 install boto3 &&\
                           pip3 install awscli &&\
-                          aws configure set aws_access_key_id AKIA2ZFMGV7VWNBWXWKR &&\
-                          aws configure set aws_secret_access_key 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 &&\
+                          aws configure set aws_access_key_id AKIA27JUHXHUJYG2SJND &&\
+                          aws configure set aws_secret_access_key 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 &&\
                           aws configure set region us-east-1 &&\
                           git clone https://github.com/praful-parmar/cloudformation-demo.git &&\
                           cd cloudformation-demo/make-small/ &&\
