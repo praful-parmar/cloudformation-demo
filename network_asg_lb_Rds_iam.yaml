@@ -164,16 +164,38 @@ Resources:
             GroupDescription: Allow All
             VpcId: !Ref VPC
             SecurityGroupIngress:
-            -   IpProtocol: -1
-                FromPort: -1
-                ToPort: -1
+            -   IpProtocol: tcp
+                FromPort: 5000
+                ToPort: 5000
                 CidrIp: 0.0.0.0/0
             SecurityGroupEgress:
             -   IpProtocol: -1
                 FromPort: -1
                 ToPort: -1
                 CidrIp: 0.0.0.0/0
-  
+  lbSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Allow All
+            VpcId: !Ref VPC
+            SecurityGroupIngress:
+            -   IpProtocol: tcp
+                FromPort: 5000
+                ToPort: 5000
+                CidrIp: 0.0.0.0/0
+            SecurityGroupEgress:
+            -   IpProtocol: -1
+                FromPort: -1
+                ToPort: -1
+                CidrIp: 0.0.0.0/0
+  # rdsSecurityGroup: 
+  #   Type: AWS::RDS::DBSecurityGroup
+  #   Properties: 
+  #     GroupDescription: "Ingress for Amazon EC2 security group"
+  #     DBSecurityGroupIngress: 
+  #       - InstanceSecurityGroup
+  #   DependsOn: InstanceSecurityGroup
+
 #auto scalling
   ASG:
       Type: AWS::AutoScaling::AutoScalingGroup
@@ -235,7 +257,7 @@ Resources:
             Name: "lb"
             Scheme: internet-facing
             SecurityGroups: 
-                - !Ref InstanceSecurityGroup
+                - !Ref lbSecurityGroup
             # SubnetMappings: 
             #Listeners: !Ref HTTPlistener
             Subnets: 
@@ -292,6 +314,8 @@ Resources:
       BackupRetentionPeriod: 0
       DBInstanceIdentifier: 'DB'
       DBSubnetGroupName: !Ref myDBSubnetGroup
+      # DBSecurityGroups: 
+      #   - !Ref rdsSecurityGroup
 
   SecretRDSInstanceAttachment:
     Type: "AWS::SecretsManager::SecretTargetAttachment"
