@@ -11,6 +11,12 @@ Parameters:
       r5.4xlarge, r3.12xlarge,i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
       d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
     Description: Enter t2.micro, m1.small, or m1.large. Default is t2.micro.
+  AmiParameter:
+    Type: String
+    Default: ami-083654bd07b5da81d
+    AllowedValues:
+      - ami-0279c3b3186e54acd
+      - ami-083654bd07b5da81d
   AvailabilityZone1Parameter:
     Type: String
     Default: us-east-1a
@@ -66,14 +72,12 @@ Resources:
         VpcId: !Ref VPC
         AvailabilityZone: !Ref AvailabilityZone1Parameter
         CidrBlock: "10.0.0.128/25"
-        MapPublicIpOnLaunch: "true"
   PrivateSubnet1:
       Type: "AWS::EC2::Subnet"
       Properties:
         VpcId: !Ref VPC
         AvailabilityZone: !Ref AvailabilityZone2Parameter
         CidrBlock: "10.0.1.128/25"
-        MapPublicIpOnLaunch: "true"
 
 #route table
   publicRouteTable:
@@ -185,16 +189,20 @@ Resources:
             TargetGroupARNs:
               - !Ref TG
             VPCZoneIdentifier: 
-                - !Ref PublicSubnet0
-                - !Ref PublicSubnet0
+                - !Ref PrivateSubnet0
+                - !Ref PrivateSubnet1
       DependsOn: lb
   myLaunchTemplate:
       Type: AWS::EC2::LaunchTemplate
       DependsOn: MyRDSInstance
       Properties: 
             LaunchTemplateName: !Sub launchtemplate
-            LaunchTemplateData: 
-                ImageId: ami-083654bd07b5da81d
+            LaunchTemplateData:
+                IamInstanceProfile: 
+                  Arn: !GetAtt
+                      - RootInstanceProfile
+                      - Arn
+                ImageId: !Ref AmiParameter
                 InstanceType: !Ref InstanceTypeParameter
                 UserData:
                     Fn::Base64: 
@@ -213,8 +221,6 @@ Resources:
                           pip3 install passlib &&\
                           pip3 install boto3 &&\
                           pip3 install awscli &&\
-                          aws configure set aws_access_key_id AKIASHTTTSUCLI3PHT4L &&\
-                          aws configure set aws_secret_access_key 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 &&\
                           aws configure set region us-east-1 &&\
                           git clone https://github.com/praful-parmar/cloudformation-demo.git &&\
                           cd cloudformation-demo/make-small/ &&\
@@ -300,4 +306,35 @@ Resources:
       SubnetIds: 
         - !Ref PrivateSubnet0
         - !Ref PrivateSubnet1
-    
+  RootRole: 
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - 
+            Effect: "Allow"
+            Principal: 
+              Service: 
+                - "ec2.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Path: "/"
+  RolePolicies: 
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "root"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Action: "*"
+            Resource: "*"
+      Roles: 
+        - Ref: "RootRole"
+  RootInstanceProfile: 
+    Type: "AWS::IAM::InstanceProfile"
+    Properties: 
+      Path: "/"
+      Roles: 
+        - Ref: "RootRole"
