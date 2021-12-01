@@ -42,6 +42,11 @@ Parameters:
     Default: db.t2.micro
     AllowedValues:
       - db.t2.micro
+  awsPolicyParameterOne:
+    Type: String
+    Default: arn:aws:iam::aws:policy/SecretsManagerReadWrite
+    AllowedValues: 
+      - arn:aws:iam::aws:policy/SecretsManagerReadWrite
 
 Resources:
   VPC:
@@ -330,32 +335,22 @@ Resources:
       SubnetIds: 
         - !Ref PrivateSubnet0
         - !Ref PrivateSubnet1
-  RootRole: 
-    Type: "AWS::IAM::Role"
-    Properties: 
-      AssumeRolePolicyDocument: 
-        Version: "2012-10-17"
-        Statement: 
-          - 
-            Effect: "Allow"
-            Principal: 
-              Service: 
-                - "ec2.amazonaws.com"
-            Action: 
-              - "sts:AssumeRole"
-      Path: "/"
-  RolePolicies: 
-    Type: "AWS::IAM::Policy"
-    Properties: 
-      PolicyName: "root"
-      PolicyDocument: 
-        Version: "2012-10-17"
-        Statement: 
-          - Effect: "Allow"
-            Action: "*"
-            Resource: "*"
-      Roles: 
-        - Ref: "RootRole"
+  RootRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: secreatManagerPermission
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - !Ref awsPolicyParameterOne
   RootInstanceProfile: 
     Type: "AWS::IAM::InstanceProfile"
     Properties: 
